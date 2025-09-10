@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Dashboard - Buzzer Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes quickFlash {
+            0% { opacity: 0; transform: scale(0.2); }
+            35% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+        .sparkle {
+            animation: quickFlash 0.25s ease-out;
+            pointer-events: none;
+        }
+        .logo-preserve {
+            object-fit: contain;
+            width: auto;
+            height: auto;
+        }
+        body {
+            background-color: #1e3a8a;
+            margin: 0;
+            font-family: system-ui;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" class="relative min-h-screen w-full max-w-md mx-auto overflow-hidden">
+    <!-- Sparkles Container -->
+    <div id="sparkles"></div>
+    
+    <!-- Main Content -->
+    <div class="relative z-10 p-4 space-y-4">
+        
+        <!-- Header Section -->
+        <div class="text-center">
+            <img 
+                src="./public/logo.png" 
+                alt="Buzz Game Logo" 
+                class="logo-preserve max-w-16 max-h-16 mx-auto mb-2 rounded-lg shadow-lg"
+                onerror="this.style.display='none'"
+            />
+            <h1 class="text-xl font-bold text-white mb-3">HOST DASHBOARD</h1>
+            
+            <!-- Game Code Display -->
+            <div id="gameCodeSection" style="display: none;">
+                <div class="bg-purple-800 border-4 border-yellow-400 rounded-xl p-4 mb-3">
+                    <div class="text-yellow-400 font-bold text-sm mb-1">GAME CODE</div>
+                    <div id="gameCodeDisplay" class="text-white font-bold text-3xl tracking-wider">------</div>
+                </div>
+            </div>
+            
+            <!-- Create Game Button -->
+            <div id="createGameSection">
+                <button
+                    id="createGameBtn"
+                    class="w-full py-3 px-4 text-lg font-bold rounded-xl border-4 border-yellow-400 shadow-lg transition-all transform bg-cyan-400 text-blue-900 hover:scale-95 hover:shadow-xl hover:bg-cyan-300 active:scale-90"
+                >
+                    CREATE NEW GAME
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Active Sections -->
+        <div id="gameActiveSections" style="display: none;">
+            
+            <!-- Buzzed In Section -->
+            <div class="bg-purple-800 border-4 border-yellow-400 rounded-xl p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-yellow-400 font-bold text-lg">BUZZED IN</h2>
+                    <button
+                        id="clearAllBtn"
+                        class="bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-sm hover:scale-95 hover:bg-red-500 transition-all transform active:scale-90"
+                    >
+                        CLEAR ALL
+                    </button>
+                </div>
+                
+                <div id="buzzedTeamsList">
+                    <div class="text-purple-200 text-center py-4">No teams buzzed in</div>
+                </div>
+            </div>
+
+            <!-- All Teams Section -->
+            <div class="bg-purple-800 border-4 border-yellow-400 rounded-xl p-4">
+                <h2 class="text-yellow-400 font-bold text-lg mb-3">ALL TEAMS (<span id="teamCount">0</span>)</h2>
+                
+                <div id="allTeamsList">
+                    <div class="text-purple-200 text-center py-4">No teams joined yet</div>
+                </div>
+            </div>
+
+            <!-- Scoring Section -->
+            <div class="bg-purple-800 border-4 border-yellow-400 rounded-xl p-4">
+                <h2 class="text-yellow-400 font-bold text-lg mb-3">SCORING</h2>
+                
+                <div id="scoringList" class="space-y-2 max-h-64 overflow-y-auto">
+                    <div class="text-purple-200 text-center py-4">No teams to score yet</div>
+                </div>
+
+                <!-- Dramatic Reading Order -->
+                <div id="dramaticReadingSection" style="display: none;" class="mt-4 pt-4 border-t-2 border-yellow-400">
+                    <h3 class="text-yellow-400 font-bold text-sm mb-2">DRAMATIC READING ORDER</h3>
+                    <div id="dramaticReadingList" class="space-y-1"></div>
+                </div>
+
+                <button
+                    id="revealScoresBtn"
+                    class="w-full mt-4 py-3 px-4 text-lg font-bold rounded-xl border-4 border-yellow-400 shadow-lg transition-all transform bg-yellow-400 text-blue-900 hover:scale-95 hover:shadow-xl hover:bg-yellow-300 active:scale-90"
+                    style="display: none;"
+                >
+                    🏆 REVEAL SCORES 🏆
+                </button>
+            </div>
+
+            <!-- Game Control -->
+            <div class="pt-4">
+                <button
+                    id="endGameBtn"
+                    class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-xl border-4 border-red-400 shadow-lg hover:scale-95 hover:shadow-xl hover:bg-red-500 transition-all transform active:scale-90"
+                >
+                    END GAME
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Game state
+    let gameActive = false;
+    let gameCode = '';
+    let allTeams = [];
+    let buzzedTeams = [];
+    let scores = {};
+    let scoresRevealed = false;
+
+    // Mock teams for demo
+    const mockTeams = [
+        { id: 1, name: 'Lightning Bolts', buzzedAt: null },
+        { id: 2, name: 'Thunder Squad', buzzedAt: Date.now() - 2000 },
+        { id: 3, name: 'Storm Chasers', buzzedAt: null },
+        { id: 4, name: 'Power Rangers', buzzedAt: Date.now() - 1000 },
+        { id: 5, name: 'Game Masters', buzzedAt: Date.now() - 3000 }
+    ];
+
+    // Sparkle effect
+    function createSparkle() {
+        const shapes = ['✦', '•', '·', '*', '✧', '⋆', '◦'];
+        const sparklesContainer = document.getElementById('sparkles');
+        
+        for(let i = 0; i < 2; i++) {
+            setTimeout(() => {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.position = 'absolute';
+                sparkle.style.left = (Math.random() * 90 + 5) + '%';
+                sparkle.style.top = (Math.random() * 90 + 5) + '%';
+                sparkle.style.color = 'white';
+                sparkle.style.fontSize = (Math.random() < 0.4 ? 6 : Math.random() < 0.7 ? 10 : 14) + 'px';
+                sparkle.style.textShadow = '0 0 4px rgba(255,255,255,0.8)';
+                sparkle.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+                
+                sparklesContainer.appendChild(sparkle);
+                
+                setTimeout(() => {
+                    sparkle.remove();
+                }, 250);
+            }, i * 50);
+        }
+    }
+
+    setInterval(createSparkle, 150);
+
+    // Generate 6-digit game code
+    function generateGameCode() {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    // Update displays
+    function updateAllTeamsDisplay() {
+        const container = document.getElementById('allTeamsList');
+        const teamCount = document.getElementById('teamCount');
+        
+        teamCount.textContent = allTeams.length;
+        
+        if (allTeams.length === 0) {
+            container.innerHTML = '<div class="text-purple-200 text-center py-4">No teams joined yet</div>';
+            return;
+        }
+
+        const sortedTeams = [...allTeams].sort((a, b) => a.name.localeCompare(b.name));
+        
+        container.innerHTML = sortedTeams.map(team => `
+            <div class="p-2 rounded-lg font-bold mb-2 ${team.buzzedAt ? 'bg-green-600 text-white' : 'bg-violet-600 text-purple-100'}">
+                <div class="flex items-center justify-between">
+                    <span>${team.name}</span>
+                    ${team.buzzedAt ? '<span class="text-xs">🚨 BUZZED</span>' : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateBuzzedTeamsDisplay() {
+        const container = document.getElementById('buzzedTeamsList');
+        
+        if (buzzedTeams.length === 0) {
+            container.innerHTML = '<div class="text-purple-200 text-center py-4">No teams buzzed in</div>';
+            return;
+        }
+
+        container.innerHTML = buzzedTeams.map((team, index) => `
+            <div class="flex items-center justify-between bg-green-600 text-white p-2 rounded-lg mb-2">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-white text-green-600 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">
+                        ${index + 1}
+                    </span>
+                    <span class="font-bold">${team.name}</span>
+                </div>
+                <button
+                    onclick="clearBuzzer(${team.id})"
+                    class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-400 transition-all transform hover:scale-95 active:scale-90"
+                >
+                    CLEAR
+                </button>
+            </div>
+        `).join('');
+    }
+
+    function updateScoringDisplay() {
+        const container = document.getElementById('scoringList');
+        const revealBtn = document.getElementById('revealScoresBtn');
+        const dramaticSection = document.getElementById('dramaticReadingSection');
+        
+        if (allTeams.length === 0) {
+            container.innerHTML = '<div class="text-purple-200 text-center py-4">No teams to score yet</div>';
+            revealBtn.style.display = 'none';
+            return;
+        }
+
+        const sortedTeams = [...allTeams].sort((a, b) => a.name.localeCompare(b.name));
+        
+        container.innerHTML = sortedTeams.map(team => `
+            <div class="flex items-center space-x-2 mb-2">
+                <div class="flex-1 text-white font-bold text-sm truncate">
+                    ${team.name}
+                </div>
+                <input
+                    type="number"
+                    id="score_${team.id}"
+                    value="${scores[team.id] || ''}"
+                    onchange="updateScore(${team.id}, this.value)"
+                    class="w-16 h-8 text-center font-bold bg-violet-600 text-white border-2 border-yellow-400 rounded focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    placeholder="0"
+                />
+            </div>
+        `).join('');
+
+        // Check if any scores entered
+        const hasScores = Object.values(scores).some(score => score !== '');
+        
+        if (hasScores) {
+            revealBtn.style.display = 'block';
+            dramaticSection.style.display = 'block';
+            
+            // Update dramatic reading order
+            const teamsWithScores = allTeams.map(team => ({
+                ...team,
+                score: parseInt(scores[team.id]) || 0
+            })).sort((a, b) => a.score - b.score);
+            
+            document.getElementById('dramaticReadingList').innerHTML = teamsWithScores.map(team => `
+                <div class="flex justify-between text-white text-sm">
+                    <span>${team.name}</span>
+                    <span class="font-bold">${team.score}</span>
+                </div>
+            `).join('');
+        } else {
+            revealBtn.style.display = 'none';
+            dramaticSection.style.display = 'none';
+        }
+    }
+
+    // Event handlers
+    function updateScore(teamId, score) {
+        scores[teamId] = score;
+        updateScoringDisplay();
+    }
+
+    function clearBuzzer(teamId) {
+        buzzedTeams = buzzedTeams.filter(team => team.id !== teamId);
+        allTeams = allTeams.map(team => 
+            team.id === teamId ? { ...team, buzzedAt: null } : team
+        );
+        updateBuzzedTeamsDisplay();
+        updateAllTeamsDisplay();
+    }
+
+    // Create new game
+    document.getElementById('createGameBtn').addEventListener('click', function() {
+        gameCode = generateGameCode();
+        gameActive = true;
+        
+        // Load mock data for demo
+        allTeams = [...mockTeams];
+        buzzedTeams = mockTeams
+            .filter(team => team.buzzedAt)
+            .sort((a, b) => a.buzzedAt - b.buzzedAt);
+        
+        // Initialize scores
+        scores = {};
+        allTeams.forEach(team => {
+            scores[team.id] = '';
+        });
+        
+        scoresRevealed = false;
+        
+        // Update UI
+        document.getElementById('gameCodeDisplay').textContent = gameCode;
+        document.getElementById('createGameSection').style.display = 'none';
+        document.getElementById('gameCodeSection').style.display = 'block';
+        document.getElementById('gameActiveSections').style.display = 'block';
+        
+        updateAllTeamsDisplay();
+        updateBuzzedTeamsDisplay();
+        updateScoringDisplay();
+    });
+
+    // Clear all buzzers
+    document.getElementById('clearAllBtn').addEventListener('click', function() {
+        buzzedTeams = [];
+        allTeams = allTeams.map(team => ({ ...team, buzzedAt: null }));
+        updateBuzzedTeamsDisplay();
+        updateAllTeamsDisplay();
+    });
+
+    // Reveal scores
+    document.getElementById('revealScoresBtn').addEventListener('click', function() {
+        scoresRevealed = true;
+        this.textContent = '🎉 SCORES REVEALED! 🎉';
+        this.className = 'w-full mt-4 py-3 px-4 text-lg font-bold rounded-xl border-4 border-yellow-400 shadow-lg cursor-default bg-green-600 text-white';
+        
+        // Play fanfare
+        try {
+            new Audio('./public/fanfare.mp3').play().catch(() => {});
+        } catch (e) {}
+    });
+
+    // End game
+    document.getElementById('endGameBtn').addEventListener('click', function() {
+        gameActive = false;
+        gameCode = '';
+        allTeams = [];
+        buzzedTeams = [];
+        scores = {};
+        scoresRevealed = false;
+        
+        // Reset UI
+        document.getElementById('createGameSection').style.display = 'block';
+        document.getElementById('gameCodeSection').style.display = 'none';
+        document.getElementById('gameActiveSections').style.display = 'none';
+        
+        document.getElementById('createGameBtn').textContent = 'CREATE NEW GAME';
+        document.getElementById('createGameBtn').className = 'w-full py-3 px-4 text-lg font-bold rounded-xl border-4 border-yellow-400 shadow-lg transition-all transform bg-cyan-400 text-blue-900 hover:scale-95 hover:shadow-xl hover:bg-cyan-300 active:scale-90';
+    });
+</script>
+
+</body>
+</html>
