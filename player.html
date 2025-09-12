@@ -317,6 +317,13 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
     }
   }
 });
+  // TEMPORARY TEST - DELETE THIS AFTER TESTING
+console.log('Testing Supabase connection...');
+supabase.from('games').select('*').limit(1).then(result => {
+  console.log('Supabase test result:', result);
+}).catch(error => {
+  console.log('Supabase test error:', error);
+});
 // Game state
 let currentScreen = 'entry';
 let gameCode = '';
