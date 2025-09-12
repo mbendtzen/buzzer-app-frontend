@@ -560,7 +560,7 @@ createConfetti();
 
 // Play fanfare once
 try {
-new Audio('/public/fanfare.mp3').play().catch(() => {});
+new Audio('fanfare.mp3').play().catch(() => {});
 } catch (e) {}
 
 // Store interval so it can be cleared on exit
@@ -728,7 +728,7 @@ navigator.vibrate([100, 50, 100]);
 
 // Play buzz sound
 try {
-new Audio('/public/buzzer.mp3').play().catch(() => {});
+new Audio('buzzer.mp3').play().catch(() => {});
 } catch (e) {}
 
 // Create celebration effect
@@ -755,7 +755,7 @@ setTimeout(() => celebration.remove(), 500);
 document.getElementById('cheerBtn').addEventListener('click', function() {
 createCheerAnimation();
 try {
-new Audio('/public/clapping.mp3').play().catch(() => {});
+new Audio('clapping.mp3').play().catch(() => {});
 } catch (e) {}
 });
 
