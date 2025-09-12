@@ -310,8 +310,14 @@ class="buzzer-normal w-80 h-80 rounded-full text-center font-bold bg-gradient-to
 // Initialize Supabase
 const supabaseUrl = 'https://tqpuxtswcuwruaqhompl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxcHV4dHN3Y3V3cnVhcWhvbXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NDUyMjQsImV4cCI6MjA3MzEyMTIyNH0.JF71Ap_FJG872iApuXaKW-vNN5TWPiJXvmz6PXWm4cU';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+  global: {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  }
+});
 // Game state
 let currentScreen = 'entry';
 let gameCode = '';
