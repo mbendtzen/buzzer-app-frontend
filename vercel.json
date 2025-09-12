@@ -10,7 +10,7 @@
     },
     {
       "src": "/",
-      "dest": "/player.html"
+      "dest": "/index.html"
     }
   ]
 }
