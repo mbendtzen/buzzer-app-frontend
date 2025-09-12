@@ -104,7 +104,7 @@ font-family: 'Inter', system-ui, -apple-system, sans-serif;
 <!-- Header Section -->
 <div class="text-center">
 <img
-src="/public/logo.png"
+src="logo.png"
 alt="Get in the Game Show Logo"
 class="logo-glow max-w-16 max-h-16 mx-auto mb-2 rounded-lg shadow-lg"
 onerror="this.style.display='none'"
@@ -518,7 +518,7 @@ this.textContent = '🎉 PLACES REVEALED! 🎉';
 this.className = 'w-full mt-4 py-3 px-4 text-lg font-bold rounded-xl border-4 border-yellow-400 shadow-2xl cursor-default bg-cyan-600 text-white';
 
 try {
-new Audio('/public/fanfare.mp3').play().catch(() => {});
+new Audio('fanfare.mp3').play().catch(() => {});
 } catch (e) {}
 });
 
