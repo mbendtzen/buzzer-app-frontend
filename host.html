@@ -335,36 +335,45 @@ async function updateScore(teamId, score) {
 }
 
 async function revealScores() {
-    console.log('Revealing scores...');
-    
-    // Play fanfare on host
-    try {
-        new Audio('fanfare.mp3').play().catch(() => {});
-    } catch (e) {}
-    
-    const placementsData = calculatePlacements();
-    console.log('Calculated placements:', placementsData);
-    
-    // Update game state to trigger reveal on all players
-    const { error } = await supabase
-        .from('games')
-        .update({
-            status: 'scores_revealed',
-            scores_data: JSON.stringify(placementsData)
-        })
-        .eq('id', gameId);
-    
-    if (error) {
-        console.error('Error revealing scores:', error);
-        return;
-    }
-    
-    console.log('Scores revealed successfully!');
-    scoresRevealed = true;
-    
-    const btn = document.getElementById('revealScoresBtn');
-    btn.textContent = '🎉 RANKINGS REVEALED! 🎉';
-    btn.className = 'w-full mt-3 py-2 px-3 text-base font-bold rounded-xl border-2 border-cyan-400 shadow-2xl cursor-default bg-cyan-600 text-white';
+console.log('Revealing scores...');
+
+// Play fanfare on host
+try {
+new Audio('fanfare.mp3').play().catch(() => {});
+} catch (e) {}
+
+const placementsData = calculatePlacements();
+console.log('Calculated placements:', placementsData);
+
+// Clean the data for JSON storage
+const cleanData = {};
+Object.keys(placementsData).forEach(teamId => {
+cleanData[teamId] = {
+place: placementsData[teamId].place,
+score: placementsData[teamId].score,
+isTie: placementsData[teamId].isTie
+};
+});
+
+// Update game state to trigger reveal on all players
+const { error } = await supabase
+.from('games')
+.update({
+status: 'scores_revealed',
+scores_data: cleanData
+})
+.eq('id', gameId);
+
+if (error) {
+console.error('Error revealing scores:', error);
+return;
+}
+
+console.log('Scores revealed successfully!');
+scoresRevealed = true;
+const btn = document.getElementById('revealScoresBtn');
+btn.textContent = '🎉 RANKINGS REVEALED! 🎉';
+btn.className = 'w-full mt-3 py-2 px-3 text-base font-bold rounded-xl border-2 border-cyan-400 shadow-2xl cursor-default bg-cyan-600 text-white';
 }
 
 function calculatePlacements() {
