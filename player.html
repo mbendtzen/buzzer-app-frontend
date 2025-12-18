@@ -356,18 +356,26 @@ function debugLog(...args) {
 const supabaseUrl = 'https://tqpuxtswcuwruaqhompl.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxcHV4dHN3Y3V3cnVhcWhvbXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NDUyMjQsImV4cCI6MjA3MzEyMTIyNH0.JF71Ap_FJG872iApuXaKW-vNN5TWPiJXvmz6PXWm4cU';
 
-let supabase;
+let supabaseClient;
 let isSupabaseReady = false;
 
-// Initialize Supabase with proper error handling
 function initSupabase() {
   try {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = 'https://tqpuxtswcuwruaqhompl.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxcHV4dHN3Y3V3cnVhcWhvbXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NDUyMjQsImV4cCI6MjA3MzEyMTIyNH0.JF71Ap_FJG872iApuXaKW-vNN5TWPiJXvmz6PXWm4cU';
+    
+    if (!window.supabase) {
+      console.error('Supabase library not loaded!');
+      return false;
+    }
+    
+    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
     isSupabaseReady = true;
-    debugLog('Supabase client initialized successfully');
+    console.log('Supabase initialized successfully');
+    return true;
   } catch (error) {
-    debugLog('Error initializing Supabase:', error);
-    isSupabaseReady = false;
+    console.error('Error initializing Supabase:', error);
+    return false;
   }
 }
 
