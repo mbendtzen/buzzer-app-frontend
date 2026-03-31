@@ -173,7 +173,7 @@ z-index: 10000;
 <input type="text" id="gameCodeInput" class="game-code-input w-full bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 text-center font-bold uppercase tracking-wider" placeholder="Enter 6-digit code" maxlength="6"/>
 </div>
 <button id="joinGameBtn" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold py-4 px-6 rounded-xl text-xl hover:from-yellow-300 hover:to-orange-400 transform hover:scale-105 transition-all duration-200 shadow-lg">
-🎟️ JOIN GAME 🪩
+🪩 JOIN SHOW 🪩
 </button>
 </div>
 </div>
@@ -183,7 +183,7 @@ z-index: 10000;
 <div id="teamSetupScreen" class="min-h-screen flex flex-col items-center justify-center p-4" style="display: none;">
 <div class="mb-8 text-center">
 <img src="logo.png" alt="Get in the Game Show Logo" class="logo-glow w-full max-w-md h-32 mx-auto mb-4 object-contain px-4" onerror="this.style.display='none'"/>
-<div class="text-white text-2xl font-bold">⭐️ YAY! Welcome to the Game! ⭐️</div>
+<div class="text-white text-2xl font-bold">⭐️ YAY! Welcome to the Show! ⭐️</div>
 </div>
 
 <div class="w-full max-w-sm">
@@ -191,9 +191,20 @@ z-index: 10000;
 <div class="text-white text-lg font-medium mb-6 text-center">Now come up with a Team Name! 💫</div>
 <div class="space-y-4">
 <div>
-<input type="text" id="teamNameInput" class="team-name-input w-full bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 text-center font-bold" placeholder="ENTER YOUR TEAM NAME" maxlength="40"/>
+<input type="text" id="teamNameInput" class="team-name-input w-full bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 text-center font-bold" placeholder="ENTER TEAM NAME" maxlength="40"/>
 <div class="text-right text-white/60 text-sm mt-2">
 <span id="charCount">0</span>/40 characters
+</div>
+</div>
+<div>
+<div class="text-white text-sm font-bold mb-2 text-center">HOW MANY PLAYERS ON YOUR TEAM?</div>
+<div class="flex justify-center space-x-2">
+<button onclick="setPlayerCount(1)" id="pc1" class="player-count-btn w-10 h-10 rounded-full font-bold text-base border-2 border-white/40 text-white transition-all hover:scale-110" style="background-color: rgba(255,255,255,0.15);">1</button>
+<button onclick="setPlayerCount(2)" id="pc2" class="player-count-btn w-10 h-10 rounded-full font-bold text-base border-2 border-white/40 text-white transition-all hover:scale-110" style="background-color: rgba(255,255,255,0.15);">2</button>
+<button onclick="setPlayerCount(3)" id="pc3" class="player-count-btn w-10 h-10 rounded-full font-bold text-base border-2 border-white/40 text-white transition-all hover:scale-110" style="background-color: rgba(255,255,255,0.15);">3</button>
+<button onclick="setPlayerCount(4)" id="pc4" class="player-count-btn w-10 h-10 rounded-full font-bold text-base border-2 border-white/40 text-white transition-all hover:scale-110" style="background-color: rgba(255,255,255,0.15);">4</button>
+<button onclick="setPlayerCount(5)" id="pc5" class="player-count-btn w-10 h-10 rounded-full font-bold text-base border-2 border-white/40 text-white transition-all hover:scale-110" style="background-color: rgba(255,255,255,0.15);">5</button>
+<button onclick="setPlayerCount(6)" id="pc6" class="player-count-btn w-10 h-10 rounded-full font-bold text-base border-2 border-white/40 text-white transition-all hover:scale-110" style="background-color: rgba(255,255,255,0.15);">6</button>
 </div>
 </div>
 <button id="submitTeamBtn" class="w-full turquoise-button text-white font-bold py-4 px-6 rounded-xl text-xl transform hover:scale-105 transition-all duration-200 shadow-lg">
@@ -226,10 +237,9 @@ EXIT 🎬
 </div>
 </div>
 
-<div id="qrSection" class="text-center bg-white/10 backdrop-blur-md border border-cyan-400/60 rounded-2xl p-3 mb-4 shadow-lg qr-box-glow">
-<div class="text-white text-sm leading-relaxed">
-💎 <strong>Scan QR code on the Scoresheet to join our FREQUENT FUN PROGRAM and earn rewards just for playing!</strong> 💎
-</div>
+<div id="qrSection" class="text-center bg-white/10 backdrop-blur-md border border-yellow-400/40 rounded-2xl p-3 mb-4 shadow-lg">
+<div class="text-yellow-400 text-xs font-bold mb-1 tracking-wider">🥠 TODAY'S FORTUNE COOKIE...</div>
+<div id="fortuneMessage" class="text-white text-sm leading-relaxed italic"></div>
 </div>
 
 <div id="buzzerSection" class="flex-1 flex flex-col items-center justify-center mb-4">
@@ -263,7 +273,10 @@ EXIT 🎬
 You just earned 1000 sMiles! 🤩
 </div>
 <div class="text-lg text-white mb-4">
-Scan QR code on scoresheet to join Frequent Fun Program and earn your first bonus gift! 🎁
+Everyone on your team that signed in to this show is also earning sMiles — <strong>We don't play favorites. We play generous.</strong>
+</div>
+<div class="text-white/70 text-sm mb-4 italic">
+Haven't signed in yet? Sign in now and your sMiles will be waiting!
 </div>
 <button id="exitCelebrationBtn" class="w-full text-white border-2 font-bold py-3 px-4 rounded-lg shadow-lg text-base transition-all transform hover:scale-95" style="background-color: #bf0ddd; border-color: #f8acee;">
 🎬 EXIT GAME 🎬
@@ -273,7 +286,7 @@ Scan QR code on scoresheet to join Frequent Fun Program and earn your first bonu
 </div>
 
 <div class="copyright-footer">
-Copyright 2025 Get in the Game Show, LLC. <br>All Rights Reserved<br>
+Copyright <span id="copyrightYear"></span> Get in the Game Show, LLC. <br>All Rights Reserved<br>
 By playing you agree to our <a href="https://thedoctoroffun.com/terms-of-service/" target="_blank" rel="noopener" style="color: #5de1e6; text-decoration: underline;">Terms of Service</a>
 </div>
   
@@ -281,6 +294,53 @@ By playing you agree to our <a href="https://thedoctoroffun.com/terms-of-service
 const DEBUG = true;
 function debugLog(...args) {
   if (DEBUG) console.log('[GITG Player]', ...args);
+}
+
+// Dynamic copyright year
+document.getElementById('copyrightYear').textContent = new Date().getFullYear();
+
+// Fortune cookie messages
+const fortuneCookies = [
+  "Cheaper than therapy. Quite possibly more effective. 😂",
+  "Turns out laughter is a sport. Welcome to training. 💪",
+  "If you were waiting for a sign to have more fun in life, this is literally it. 👇",
+  "Since laughter burns calories, this might count as leg day. 🦵",
+  "Doctors say laughter adds years to your life — so technically this is life insurance. 🩺",
+  "Finally! A game show where the only skill required is laughing. 😂",
+  "You can't be stressed out when you're laughing this hard. Science says so. 🔬",
+  "Since laughing is really good for you, this could replace your gym membership. 🏋️",
+  "Warning: your face might hurt from smiling too much. Sorry not sorry. 😬",
+  "You don't need a PhD in random facts to win here — you just need a sense of humor. 🎓",
+  "We have a confession — we're not sorry for what's about to happen to your evening. 😈",
+  "Finally — something you can win without having any skill whatsoever. 🏆",
+  "This is not a spectator sport. Get in the Game Show. 🎮",
+  "We might've replaced your gym, therapist, and date night all at once. 💅",
+  "This might be the only game show where wrong answers get applause. 👏",
+  "Warning: side effects of playing our game show may become habit-forming. ⚠️"
+];
+
+function loadFortuneCookie() {
+  const msg = fortuneCookies[Math.floor(Math.random() * fortuneCookies.length)];
+  document.getElementById('fortuneMessage').textContent = msg;
+}
+
+// Player count state
+let playerCount = null;
+
+function setPlayerCount(n) {
+  playerCount = n;
+  for (let i = 1; i <= 6; i++) {
+    const btn = document.getElementById('pc' + i);
+    if (i === n) {
+      btn.style.backgroundColor = '#06b6d4';
+      btn.style.borderColor = '#5de1e6';
+      btn.style.transform = 'scale(1.2)';
+    } else {
+      btn.style.backgroundColor = 'rgba(255,255,255,0.15)';
+      btn.style.borderColor = 'rgba(255,255,255,0.4)';
+      btn.style.transform = 'scale(1)';
+    }
+  }
 }
 
 let supabaseClient;
@@ -518,6 +578,7 @@ function showScreen(screen) {
   } else if (screen === 'dashboard') {
     document.getElementById('dashboardScreen').style.display = 'flex';
     document.getElementById('gameCodeDisplay').textContent = gameCode || '------';
+    loadFortuneCookie();
   } else if (screen === 'celebration') {
     document.getElementById('celebrationScreen').style.display = 'flex';
   }
@@ -798,6 +859,7 @@ async function joinGame(code, name) {
         .insert([{
           game_id: validGameId,
           name: name,
+          player_count: playerCount || 1,
           created_at: new Date().toISOString()
         }])
         .select()
@@ -1019,6 +1081,7 @@ function exitGame() {
   teamId = null;
   gameId = null;
   isBuzzed = false;
+  playerCount = null;
   reconnectAttempts = 0;
 
   document.getElementById('gameCodeInput').value = '';
@@ -1076,6 +1139,10 @@ document.getElementById('teamNameInput').addEventListener('input', function(e) {
 
 document.getElementById('submitTeamBtn').addEventListener('click', async function() {
   if (teamName.trim().length >= 2) {
+    if (!playerCount) {
+      alert('Please select how many players are on your team!');
+      return;
+    }
     const success = await joinGame(gameCode, teamName.trim());
     if (success) {
       document.getElementById('teamNameDisplay').innerHTML = `⭐ ${teamName} ⭐`;
