@@ -782,16 +782,18 @@ async function attemptReconnection() {
     if (gameData && gameData.status === 'scores_revealed' && gameData.scores_data) {
       try {
         const placements = gameData.scores_data;
-        const myPlacement = placements[teamId];
-        if (myPlacement) {
-          showReconnectingOverlay(false);
-          showCelebration(myPlacement);
-          setupRealtime();
-          reconnectAttempts = 0;
-          return true;
-        }
+        const myPlacement = placements[teamId] || null;
+        showReconnectingOverlay(false);
+        showCelebration(myPlacement);
+        setupRealtime();
+        reconnectAttempts = 0;
+        return true;
       } catch (e) {
         debugLog('Error parsing scores data on reconnect:', e);
+        showReconnectingOverlay(false);
+        showCelebration(null);
+        reconnectAttempts = 0;
+        return true;
       }
     }
 
@@ -1001,17 +1003,12 @@ function setupRealtime() {
           debugLog('Scores revealed! Data:', newData.scores_data);
           try {
             const placements = newData.scores_data;
-            debugLog('Parsed placements:', placements);
-            const myPlacement = placements[teamId];
+            const myPlacement = placements[teamId] || null;
             debugLog('My placement:', myPlacement, 'Team ID:', teamId);
-            
-            if (myPlacement) {
-              showCelebration(myPlacement);
-            } else {
-              debugLog('No placement found for team ID:', teamId);
-            }
+            showCelebration(myPlacement);
           } catch (e) {
             debugLog('Error parsing scores data:', e);
+            showCelebration(null);
           }
         }
         
@@ -1037,13 +1034,14 @@ function setupRealtime() {
 
 function showCelebration(placement) {
   debugLog('Showing celebration for placement:', placement);
-  const { place, isTie } = placement;
 
   let message;
-  if (isTie) {
-    message = `It's a Tie! You Got ${getOrdinal(place)} Place!`;
+  if (!placement || !placement.place) {
+    message = `YAY, THAT WAS FUN!`;
+  } else if (placement.isTie) {
+    message = `It's a Tie! You Got ${getOrdinal(placement.place)} Place!`;
   } else {
-    message = `You got ${getOrdinal(place)} place!`;
+    message = `You got ${getOrdinal(placement.place)} place!`;
   }
 
   document.getElementById('placementMessage').textContent = `🎉 ${message} 🎉`;
@@ -1240,12 +1238,15 @@ document.addEventListener('visibilitychange', function() {
         if (gameData && gameData.status === 'scores_revealed' && gameData.scores_data) {
           try {
             const placements = gameData.scores_data;
-            const myPlacement = placements[teamId];
-            if (myPlacement && currentScreen !== 'celebration') {
+            const myPlacement = placements[teamId] || null;
+            if (currentScreen !== 'celebration') {
               showCelebration(myPlacement);
             }
           } catch (e) {
             debugLog('Error parsing scores data on visibility change:', e);
+            if (currentScreen !== 'celebration') {
+              showCelebration(null);
+            }
           }
         }
 
