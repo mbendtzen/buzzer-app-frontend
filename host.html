@@ -118,7 +118,7 @@ style="background-color: #5de1e6;"
 
 <!-- All Teams Section -->
 <div class="bg-white/10 backdrop-blur-md border border-purple-300/40 rounded-xl p-3 shadow-2xl">
-<h2 class="font-bold text-base mb-2" style="color: #f8acee;">👥 ALL TEAMS (<span id="teamCount">0</span>) 👥</h2>
+<h2 class="font-bold text-base mb-2" style="color: #f8acee;">👥 ALL TEAMS (<span id="teamCount">0</span>) &nbsp;|&nbsp; <span id="playerTotal">0</span> PLAYERS 👥</h2>
 <div id="allTeamsList">
 <div class="text-white/60 text-center py-2 italic text-base">No teams joined yet...</div>
 </div>
@@ -144,6 +144,12 @@ style="display: none;"
 >
 🎤 REVEAL RANKINGS 🎉
 </button>
+
+<div id="revealSummary" style="display: none;" class="mt-3 pt-3 border-t border-yellow-400/60 text-center">
+  <div class="text-yellow-400 font-bold text-sm mb-1">📸 FINAL RESULTS</div>
+  <div id="revealSummaryStats" class="text-white/80 text-sm mb-2"></div>
+  <div id="revealSummaryList" class="space-y-1"></div>
+</div>
 </div>
 
 <!-- Game Control -->
@@ -162,7 +168,7 @@ style="background-color: #cb0cea;"
 
 <!-- Copyright Footer -->
 <div class="copyright-footer">
-Copyright 2025 Get in the Game Show, LLC. All Rights Reserved
+Copyright <span id="copyrightYear"></span> Get in the Game Show, LLC. All Rights Reserved
 </div>
 
 <script>
@@ -191,6 +197,7 @@ try {
 
 // Game state
 let gameActive = false;
+document.getElementById('copyrightYear').textContent = new Date().getFullYear();
 let gameCode = '';
 let gameId = null;
 let allTeams = [];
@@ -289,7 +296,38 @@ async function loadTeams() {
     }
     
     allTeams = data || [];
-    buzzedTeams = allTeams.filter(team => team.buzzed_at).sort((a, b) => new Date(a.buzzed_at) - new Date(b.buzzed_at));
+    
+    // Sort buzzed teams with 1-second cluster fairness shuffle
+    const rawBuzzed = allTeams.filter(team => team.buzzed_at).sort((a, b) => new Date(a.buzzed_at) - new Date(b.buzzed_at));
+    
+    // Group into clusters where buzz times are within 1 second of the first in the cluster
+    const clusters = [];
+    let currentCluster = [];
+    rawBuzzed.forEach(team => {
+        if (currentCluster.length === 0) {
+            currentCluster.push(team);
+        } else {
+            const clusterStart = new Date(currentCluster[0].buzzed_at).getTime();
+            const thisTime = new Date(team.buzzed_at).getTime();
+            if (thisTime - clusterStart <= 1000) {
+                currentCluster.push(team);
+            } else {
+                clusters.push(currentCluster);
+                currentCluster = [team];
+            }
+        }
+    });
+    if (currentCluster.length > 0) clusters.push(currentCluster);
+    
+    // Shuffle each cluster, then flatten
+    buzzedTeams = clusters.flatMap(cluster => {
+        if (cluster.length === 1) return cluster;
+        for (let i = cluster.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cluster[i], cluster[j]] = [cluster[j], cluster[i]];
+        }
+        return cluster;
+    });
     
     const currentBuzzedCount = buzzedTeams.length;
     if (currentBuzzedCount > (window.lastBuzzedCount || 0)) {
@@ -395,6 +433,21 @@ async function revealScores() {
     const btn = document.getElementById('revealScoresBtn');
     btn.textContent = '🎉 RANKINGS REVEALED! 🎉';
     btn.className = 'w-full mt-3 py-2 px-3 text-base font-bold rounded-xl border-2 border-cyan-400 shadow-2xl cursor-default bg-cyan-600 text-white';
+
+    // Build post-reveal summary for host photo
+    const totalPlayers = allTeams.reduce((sum, t) => sum + (t.player_count || 1), 0);
+    const sortedForSummary = allTeams
+        .map(team => ({ ...team, ...cleanData[team.id] }))
+        .sort((a, b) => a.place - b.place);
+
+    document.getElementById('revealSummaryStats').textContent = `${allTeams.length} Teams  |  ${totalPlayers} Players`;
+    document.getElementById('revealSummaryList').innerHTML = sortedForSummary.map(team => `
+        <div class="flex justify-between text-white text-sm bg-white/10 px-2 py-1 rounded">
+            <span>${getOrdinal(team.place)} — ${team.name}</span>
+            <span class="font-bold text-yellow-400">${team.score} pts</span>
+        </div>
+    `).join('');
+    document.getElementById('revealSummary').style.display = 'block';
 }
 
 function calculatePlacements() {
@@ -520,6 +573,9 @@ function updateAllTeamsDisplay() {
     
     teamCount.textContent = allTeams.length;
     
+    const totalPlayers = allTeams.reduce((sum, t) => sum + (t.player_count || 1), 0);
+    document.getElementById('playerTotal').textContent = totalPlayers;
+    
     if (allTeams.length === 0) {
         container.innerHTML = '<div class="text-white/60 text-center py-2 italic text-base">No teams joined yet...</div>';
         return;
@@ -530,7 +586,7 @@ function updateAllTeamsDisplay() {
     container.innerHTML = sortedTeams.map(team => `
         <div class="p-2 rounded-lg font-bold mb-1 transition-all text-base ${team.buzzed_at ? 'border border-yellow-400 transform scale-105' : ''} text-white hover:scale-102 shadow-md" style="background-color: #0a2b8a;">
             <div class="flex items-center justify-between">
-                <span>${team.name}</span>
+                <span>${team.name} <span style="color: #5de1e6; font-weight: normal; font-size: 0.85em;">(${team.player_count || 1})</span></span>
                 <div class="flex items-center space-x-2">
                     ${team.buzzed_at ? '<span class="text-center px-2 py-1 rounded text-xs font-bold" style="color: #fbbf24; font-weight: bold;"><em>*BUZZED IN!*</em> 🛎️</span>' : ''}
                     <button onclick="removeTeam(${team.id})" class="text-xs text-white px-2 py-1 rounded hover:scale-95 border" style="background-color: #bf0ddd; border-color: #f8acee;">REMOVE</button>
