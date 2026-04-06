@@ -197,6 +197,7 @@ try {
 
 // Game state
 let gameActive = false;
+let callCounts = {}; // tracks how many times each team has been individually cleared (called on)
 document.getElementById('copyrightYear').textContent = new Date().getFullYear();
 let gameCode = '';
 let gameId = null;
@@ -297,37 +298,8 @@ async function loadTeams() {
     
     allTeams = data || [];
     
-    // Sort buzzed teams with 1-second cluster fairness shuffle
-    const rawBuzzed = allTeams.filter(team => team.buzzed_at).sort((a, b) => new Date(a.buzzed_at) - new Date(b.buzzed_at));
-    
-    // Group into clusters where buzz times are within 1 second of the first in the cluster
-    const clusters = [];
-    let currentCluster = [];
-    rawBuzzed.forEach(team => {
-        if (currentCluster.length === 0) {
-            currentCluster.push(team);
-        } else {
-            const clusterStart = new Date(currentCluster[0].buzzed_at).getTime();
-            const thisTime = new Date(team.buzzed_at).getTime();
-            if (thisTime - clusterStart <= 1000) {
-                currentCluster.push(team);
-            } else {
-                clusters.push(currentCluster);
-                currentCluster = [team];
-            }
-        }
-    });
-    if (currentCluster.length > 0) clusters.push(currentCluster);
-    
-    // Shuffle each cluster, then flatten
-    buzzedTeams = clusters.flatMap(cluster => {
-        if (cluster.length === 1) return cluster;
-        for (let i = cluster.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [cluster[i], cluster[j]] = [cluster[j], cluster[i]];
-        }
-        return cluster;
-    });
+    // Pure timestamp order — first to buzz is first on the list, no shuffling
+    buzzedTeams = allTeams.filter(team => team.buzzed_at).sort((a, b) => new Date(a.buzzed_at) - new Date(b.buzzed_at));
     
     const currentBuzzedCount = buzzedTeams.length;
     if (currentBuzzedCount > (window.lastBuzzedCount || 0)) {
@@ -348,6 +320,9 @@ async function clearBuzzer(teamId) {
         console.error('Error clearing buzzer:', error);
         return;
     }
+    
+    // Increment call count for this team
+    callCounts[teamId] = (callCounts[teamId] || 0) + 1;
     
     loadTeams();
 }
@@ -532,6 +507,7 @@ async function endGame() {
     buzzedTeams = [];
     scores = {};
     scoresRevealed = false;
+    callCounts = {};
     window.lastBuzzedCount = 0;
     
     document.getElementById('createGameSection').style.display = 'block';
@@ -583,17 +559,20 @@ function updateAllTeamsDisplay() {
     
     const sortedTeams = [...allTeams].sort((a, b) => a.name.localeCompare(b.name));
     
-    container.innerHTML = sortedTeams.map(team => `
+    container.innerHTML = sortedTeams.map(team => {
+        const count = callCounts[team.id] || 0;
+        const countBadge = count > 0 ? `<span style="color: #5de1e6; font-size: 0.75em; font-weight: normal;">called ×${count}</span>` : '';
+        return `
         <div class="p-2 rounded-lg font-bold mb-1 transition-all text-base ${team.buzzed_at ? 'border border-yellow-400 transform scale-105' : ''} text-white hover:scale-102 shadow-md" style="background-color: #0a2b8a;">
             <div class="flex items-center justify-between">
-                <span>${team.name} <span style="color: #5de1e6; font-weight: normal; font-size: 0.85em;">(${team.player_count || 1})</span></span>
+                <span>${team.name} <span style="color: #5de1e6; font-weight: normal; font-size: 0.85em;">(${team.player_count || 1})</span> ${countBadge}</span>
                 <div class="flex items-center space-x-2">
                     ${team.buzzed_at ? '<span class="text-center px-2 py-1 rounded text-xs font-bold" style="color: #fbbf24; font-weight: bold;"><em>*BUZZED IN!*</em> 🛎️</span>' : ''}
                     <button onclick="removeTeam(${team.id})" class="text-xs text-white px-2 py-1 rounded hover:scale-95 border" style="background-color: #bf0ddd; border-color: #f8acee;">REMOVE</button>
                 </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 function updateBuzzedTeamsDisplay() {
