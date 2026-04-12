@@ -260,6 +260,25 @@ EXIT 🎬
 <div id="gameCodeDisplay" class="text-white font-bold text-lg text-center tracking-wider font-mono">------</div>
 </div>
 </div>
+
+<div id="finalScoreSection" class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 mb-4 shadow-2xl">
+<div class="text-center mb-3">
+<div class="text-white font-bold text-lg mb-1">🏁 FINAL SCORE</div>
+<div class="text-white/60 text-xs leading-relaxed">Wait for your host to announce the end of all 3 games before submitting!</div>
+</div>
+<div id="finalScoreEntry">
+<input type="number" id="finalScoreInput" inputmode="numeric" pattern="[0-9]*" class="w-full bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 text-center font-bold text-2xl py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="Enter score"/>
+<button id="submitScoreBtn" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold py-3 px-6 rounded-xl text-lg hover:from-yellow-300 hover:to-orange-400 transform hover:scale-105 transition-all duration-200 shadow-lg">
+🎯 SUBMIT FINAL SCORE
+</button>
+</div>
+<div id="finalScoreConfirmed" style="display:none;" class="text-center">
+<div class="text-2xl mb-2">✅</div>
+<div class="text-white font-bold text-lg">Score submitted!</div>
+<div id="finalScoreConfirmedValue" class="text-yellow-400 font-bold text-2xl"></div>
+<div class="text-white/60 text-sm mt-1">Your host will announce the results shortly!</div>
+</div>
+</div>
 </div>
 
 <div id="celebrationScreen" class="min-h-screen flex flex-col items-center justify-center p-4 pb-16" style="display: none;">
@@ -1067,6 +1086,42 @@ function getOrdinal(num) {
   return num + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
 }
 
+async function submitFinalScore() {
+  const input = document.getElementById('finalScoreInput');
+  const score = parseInt(input.value);
+
+  if (!score && score !== 0) {
+    alert('Please enter your final score!');
+    return;
+  }
+
+  if (score < 0) {
+    alert('Score cannot be negative!');
+    return;
+  }
+
+  const confirmed = confirm(`Your final score for today's game show (all three games plus bonus points) is ${score}. Is that your final answer? 🎯`);
+  if (!confirmed) return;
+
+  try {
+    const { error } = await supabaseClient
+      .from('teams')
+      .update({ score: score })
+      .eq('id', teamId);
+
+    if (error) throw error;
+
+    document.getElementById('finalScoreEntry').style.display = 'none';
+    document.getElementById('finalScoreConfirmed').style.display = 'block';
+    document.getElementById('finalScoreConfirmedValue').textContent = score + ' points';
+    debugLog('Final score submitted:', score);
+
+  } catch (e) {
+    debugLog('Error submitting final score:', e);
+    alert('Error submitting score. Please try again!');
+  }
+}
+
 function exitGame() {
   debugLog('Exiting game');
   
@@ -1163,6 +1218,10 @@ document.getElementById('buzzerBtn').addEventListener('click', async function() 
 document.getElementById('cheerBtn').addEventListener('click', function() {
   playClappingSound();
   createPartyEmojis();
+});
+
+document.getElementById('submitScoreBtn').addEventListener('click', async function() {
+  await submitFinalScore();
 });
 
 document.getElementById('exitGameBtn').addEventListener('click', function() {
