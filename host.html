@@ -526,6 +526,10 @@ function setupRealtime() {
             { event: '*', schema: 'public', table: 'teams', filter: `game_id=eq.${gameId}` },
             (payload) => {
                 console.log('Team change:', payload);
+                // If a team submitted a score, update our local scores object
+                if (payload.new && payload.new.score !== undefined && payload.new.score !== null) {
+                    scores[payload.new.id] = payload.new.score;
+                }
                 loadTeams();
             }
         )
